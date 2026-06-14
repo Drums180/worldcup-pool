@@ -14,10 +14,12 @@ if admin_password:
         st.stop()
 
 st.write(
-    "Sincroniza los resultados y el calendario desde football-data.org y recalcula los puntos."
+    "La app ya se actualiza sola con los resultados de football-data.org (cada pocos minutos). "
+    "Este botón solo copia el estado actual a las hojas 'Resultados' y 'Bonuses' de tu Google Sheet, "
+    "por si quieres revisarlo ahí también."
 )
 
-if st.button("🔄 Sincronizar resultados ahora", type="primary"):
+if st.button("🔄 Copiar resultados al Google Sheet", type="primary"):
     with st.spinner("Obteniendo calendario y resultados..."):
         fixtures_df = football_data.get_fixtures_df()
         resultados_df = scoring.build_resultados(fixtures_df)

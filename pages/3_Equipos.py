@@ -1,14 +1,15 @@
 import streamlit as st
 
-from utils import scoring, sheets
+from utils import football_data, scoring, sheets
 
 st.set_page_config(page_title="Equipos - Copa Mundial 2026", page_icon="🎯", layout="wide")
 
 st.title("🎯 Equipos por persona")
 
 picks_df = sheets.read_picks()
-resultados_df = sheets.read_resultados()
-bonuses_df = sheets.read_bonuses()
+fixtures_df = football_data.get_fixtures_df()
+resultados_df = scoring.build_resultados(fixtures_df)
+bonuses_df = scoring.build_bonuses(fixtures_df)
 
 picks_long = scoring.normalize_picks(picks_df)
 

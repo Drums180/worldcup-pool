@@ -1,20 +1,21 @@
 import streamlit as st
 
-from utils import scoring, sheets
+from utils import football_data, scoring, sheets
 
 st.set_page_config(page_title="Copa Mundial 2026", page_icon="🏆", layout="wide")
 
 st.title("🏆 Copa Mundial 2026")
 
 picks_df = sheets.read_picks()
-resultados_df = sheets.read_resultados()
-bonuses_df = sheets.read_bonuses()
+fixtures_df = football_data.get_fixtures_df()
+resultados_df = scoring.build_resultados(fixtures_df)
+bonuses_df = scoring.build_bonuses(fixtures_df)
 
 picks_long = scoring.normalize_picks(picks_df)
 leaderboard = scoring.compute_leaderboard(picks_long, resultados_df, bonuses_df)
 
 if leaderboard.empty:
-    st.info("Aún no hay datos. Ve a la página de Admin para sincronizar resultados.")
+    st.info("Aún no hay datos.")
 else:
     leader = leaderboard.iloc[0]
     cols = st.columns(min(len(leaderboard), 3))
