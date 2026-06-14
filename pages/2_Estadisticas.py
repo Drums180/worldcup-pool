@@ -23,6 +23,7 @@ historial_df["total"] = pd.to_numeric(historial_df["total"], errors="coerce")
 st.subheader("Evolución del total de puntos")
 pivot = historial_df.pivot_table(index="timestamp", columns="persona", values="total", aggfunc="last")
 pivot = pivot.sort_index().ffill()
+pivot.index = pivot.index.strftime("%b %d")
 st.line_chart(pivot)
 
 st.subheader("¿Quién ha liderado en cada momento?")
