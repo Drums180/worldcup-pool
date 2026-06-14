@@ -18,7 +18,7 @@ if fixtures_df.empty:
     st.stop()
 
 fixtures_df = fixtures_df.copy()
-fixtures_df["date"] = pd.to_datetime(fixtures_df["date"]).dt.tz_convert(None)
+fixtures_df["date"] = pd.to_datetime(fixtures_df["date"]).dt.tz_convert("America/Monterrey").dt.tz_localize(None)
 
 stages = ["Todas"] + sorted(fixtures_df["stage"].unique().tolist())
 status_options = {
