@@ -10,7 +10,6 @@ SCOPES = [
 
 RESULTADOS_HEADERS = ["fixture_id", "team", "opponent", "stage", "status", "result", "points"]
 BONUSES_HEADERS = ["team", "stage_reached", "bonus_points"]
-HISTORIAL_HEADERS = ["timestamp", "persona", "match_points", "bonus_points", "total"]
 
 
 @st.cache_resource
@@ -81,23 +80,5 @@ def write_bonuses(df: pd.DataFrame):
     df = df[BONUSES_HEADERS]
     ws.clear()
     ws.append_row(BONUSES_HEADERS)
-    if not df.empty:
-        ws.append_rows(df.astype(str).values.tolist())
-
-
-def read_historial() -> pd.DataFrame:
-    sheet = get_spreadsheet()
-    ws = _get_or_create_worksheet(sheet, "Historial", HISTORIAL_HEADERS)
-    records = ws.get_all_records()
-    df = pd.DataFrame(records)
-    if df.empty:
-        df = pd.DataFrame(columns=HISTORIAL_HEADERS)
-    return df
-
-
-def append_historial(df: pd.DataFrame):
-    sheet = get_spreadsheet()
-    ws = _get_or_create_worksheet(sheet, "Historial", HISTORIAL_HEADERS)
-    df = df[HISTORIAL_HEADERS]
     if not df.empty:
         ws.append_rows(df.astype(str).values.tolist())

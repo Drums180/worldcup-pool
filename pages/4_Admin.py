@@ -1,6 +1,3 @@
-from datetime import datetime
-
-import pandas as pd
 import streamlit as st
 
 from utils import football_data, scoring, sheets
@@ -17,8 +14,7 @@ if admin_password:
         st.stop()
 
 st.write(
-    "Sincroniza los resultados y el calendario desde API-Football, recalcula los puntos "
-    "y guarda una instantánea en el Historial para la página de Estadísticas."
+    "Sincroniza los resultados y el calendario desde football-data.org y recalcula los puntos."
 )
 
 if st.button("🔄 Sincronizar resultados ahora", type="primary"):
@@ -33,10 +29,6 @@ if st.button("🔄 Sincronizar resultados ahora", type="primary"):
         picks_df = sheets.read_picks()
         picks_long = scoring.normalize_picks(picks_df)
         leaderboard = scoring.compute_leaderboard(picks_long, resultados_df, bonuses_df)
-
-        snapshot = leaderboard.copy()
-        snapshot["timestamp"] = datetime.utcnow().isoformat()
-        sheets.append_historial(snapshot[sheets.HISTORIAL_HEADERS])
 
     st.success(f"Sincronización completa: {len(resultados_df) // 2} partidos finalizados procesados.")
     st.dataframe(leaderboard, use_container_width=True, hide_index=True)

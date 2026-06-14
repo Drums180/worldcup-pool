@@ -110,6 +110,62 @@ def build_bonuses(fixtures_df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=columns)
 
 
+def build_history(fixtures_df: pd.DataFrame, picks_long: pd.DataFrame) -> pd.DataFrame:
+    """Cumulative point totals per person, one row per person per matchday date,
+    reconstructed from each finished fixture's real date."""
+    columns = ["date", "persona", "total"]
+    if fixtures_df.empty or picks_long.empty:
+        return pd.DataFrame(columns=columns)
+
+    finished = fixtures_df[fixtures_df["status"].isin(FINISHED_STATUSES)].copy()
+    if finished.empty:
+        return pd.DataFrame(columns=columns)
+
+    finished["date"] = pd.to_datetime(finished["date"]).dt.date
+    finished = finished.sort_values("date")
+
+    team_to_persona = picks_long.set_index("team")["persona"].to_dict()
+    totals = {persona: 0 for persona in picks_long["persona"].unique()}
+    team_bonus: dict = {}
+    rows = []
+
+    for date, day_fixtures in finished.groupby("date"):
+        for _, f in day_fixtures.iterrows():
+            home_goals, away_goals = f["home_goals"], f["away_goals"]
+            if home_goals > away_goals:
+                home_result, away_result = "W", "L"
+            elif home_goals < away_goals:
+                home_result, away_result = "L", "W"
+            else:
+                home_result, away_result = "D", "D"
+
+            for team, result in ((f["home_team"], home_result), (f["away_team"], away_result)):
+                persona = team_to_persona.get(team)
+                if persona:
+                    totals[persona] += MATCH_POINTS[result]
+
+            next_stage = STAGE_PROGRESSION.get(f["stage"])
+            if next_stage:
+                winner = None
+                if f["home_winner"] is True:
+                    winner = f["home_team"]
+                elif f["away_winner"] is True:
+                    winner = f["away_team"]
+                if winner:
+                    new_bonus = STAGE_BONUSES[next_stage]
+                    delta = new_bonus - team_bonus.get(winner, 0)
+                    if delta:
+                        persona = team_to_persona.get(winner)
+                        if persona:
+                            totals[persona] += delta
+                        team_bonus[winner] = new_bonus
+
+        for persona, total in totals.items():
+            rows.append({"date": date, "persona": persona, "total": total})
+
+    return pd.DataFrame(rows, columns=columns)
+
+
 def compute_leaderboard(
     picks_long: pd.DataFrame, resultados_df: pd.DataFrame, bonuses_df: pd.DataFrame
 ) -> pd.DataFrame:
