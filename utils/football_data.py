@@ -1,3 +1,4 @@
+import time
 from typing import Optional
 
 import pandas as pd
@@ -133,15 +134,34 @@ def _session_with_retries() -> requests.Session:
     return session
 
 
-@st.cache_data(ttl=300)
+# How long fetched fixtures are cached before re-querying the API. A longer
+# window means switching between tabs reuses the same data instead of
+# re-fetching, while still picking up new results every few minutes.
+CACHE_TTL_SECONDS = 600
+
+# On top of the per-request retries above, retry the whole call a few times
+# with backoff so a transient outage resolves itself instead of erroring out.
+FETCH_ATTEMPTS = 4
+FETCH_RETRY_BACKOFF_SECONDS = 3
+
+
+@st.cache_data(ttl=CACHE_TTL_SECONDS)
 def fetch_matches() -> list[dict]:
-    resp = _session_with_retries().get(
-        f"{BASE_URL}/competitions/{COMPETITION}/matches",
-        headers=_headers(),
-        timeout=20,
-    )
-    resp.raise_for_status()
-    return resp.json().get("matches", [])
+    last_error: Exception = None
+    for attempt in range(FETCH_ATTEMPTS):
+        try:
+            resp = _session_with_retries().get(
+                f"{BASE_URL}/competitions/{COMPETITION}/matches",
+                headers=_headers(),
+                timeout=20,
+            )
+            resp.raise_for_status()
+            return resp.json().get("matches", [])
+        except requests.exceptions.RequestException as e:
+            last_error = e
+            if attempt < FETCH_ATTEMPTS - 1:
+                time.sleep(FETCH_RETRY_BACKOFF_SECONDS * (attempt + 1))
+    raise last_error
 
 
 def normalize_fixtures(matches: list[dict]) -> pd.DataFrame:
