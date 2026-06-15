@@ -21,7 +21,11 @@ st.write(
 
 if st.button("🔄 Copiar resultados al Google Sheet", type="primary"):
     with st.spinner("Obteniendo calendario y resultados..."):
-        fixtures_df = football_data.get_fixtures_df()
+        try:
+            fixtures_df = football_data.get_fixtures_df()
+        except Exception as e:
+            st.error(f"No se pudo obtener el calendario desde la API: {e}")
+            st.stop()
         resultados_df = scoring.build_resultados(fixtures_df)
         bonuses_df = scoring.build_bonuses(fixtures_df)
 

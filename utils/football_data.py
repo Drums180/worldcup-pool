@@ -3,6 +3,8 @@ from typing import Optional
 import pandas as pd
 import requests
 import streamlit as st
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 BASE_URL = "https://api.football-data.org/v4"
 COMPETITION = "WC"  # FIFA World Cup
@@ -119,9 +121,21 @@ def translate_status(status: str) -> str:
     return STATUS_MAP.get(status, status)
 
 
+def _session_with_retries() -> requests.Session:
+    session = requests.Session()
+    retry = Retry(
+        total=3,
+        backoff_factor=0.5,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET"],
+    )
+    session.mount("https://", HTTPAdapter(max_retries=retry))
+    return session
+
+
 @st.cache_data(ttl=300)
 def fetch_matches() -> list[dict]:
-    resp = requests.get(
+    resp = _session_with_retries().get(
         f"{BASE_URL}/competitions/{COMPETITION}/matches",
         headers=_headers(),
         timeout=20,
@@ -152,4 +166,12 @@ def normalize_fixtures(matches: list[dict]) -> pd.DataFrame:
 
 
 def get_fixtures_df() -> pd.DataFrame:
-    return normalize_fixtures(fetch_matches())
+    try:
+        matches = fetch_matches()
+    except requests.exceptions.RequestException:
+        matches = st.session_state.get("_last_good_matches")
+        if matches is None:
+            raise
+    else:
+        st.session_state["_last_good_matches"] = matches
+    return normalize_fixtures(matches)
