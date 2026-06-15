@@ -48,11 +48,15 @@ def normalize_picks(picks_df: pd.DataFrame) -> pd.DataFrame:
 
 def build_resultados(fixtures_df: pd.DataFrame) -> pd.DataFrame:
     """One row per team per finished fixture, with W/D/L result and match points."""
-    columns = ["fixture_id", "team", "opponent", "stage", "status", "result", "points"]
+    columns = [
+        "fixture_id", "team", "opponent", "stage", "status", "result", "points",
+        "date", "goals_for", "goals_against",
+    ]
     if fixtures_df.empty:
         return pd.DataFrame(columns=columns)
 
-    finished = fixtures_df[fixtures_df["status"].isin(FINISHED_STATUSES)]
+    finished = fixtures_df[fixtures_df["status"].isin(FINISHED_STATUSES)].copy()
+    finished["date"] = pd.to_datetime(finished["date"])
     rows = []
     for _, f in finished.iterrows():
         home_goals, away_goals = f["home_goals"], f["away_goals"]
@@ -67,11 +71,13 @@ def build_resultados(fixtures_df: pd.DataFrame) -> pd.DataFrame:
             "fixture_id": f["fixture_id"], "team": f["home_team"], "opponent": f["away_team"],
             "stage": f["stage"], "status": "FT", "result": home_result,
             "points": MATCH_POINTS[home_result],
+            "date": f["date"], "goals_for": home_goals, "goals_against": away_goals,
         })
         rows.append({
             "fixture_id": f["fixture_id"], "team": f["away_team"], "opponent": f["home_team"],
             "stage": f["stage"], "status": "FT", "result": away_result,
             "points": MATCH_POINTS[away_result],
+            "date": f["date"], "goals_for": away_goals, "goals_against": home_goals,
         })
 
     return pd.DataFrame(rows, columns=columns)
