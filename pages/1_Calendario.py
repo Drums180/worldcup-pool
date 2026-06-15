@@ -44,7 +44,7 @@ if status_values:
 filtered = filtered.sort_values("date")
 
 display = pd.DataFrame({
-    "Fecha": filtered["date"].dt.strftime("%d-%b %H:%M"),
+    "Fecha": filtered["date"].dt.strftime("%d-%b %H:%M").map(football_data.to_spanish_date),
     "Etapa": filtered["stage"],
     "Local": filtered["home_team"],
     "Marcador": [
@@ -52,7 +52,7 @@ display = pd.DataFrame({
         for h, a in zip(filtered["home_goals"], filtered["away_goals"])
     ],
     "Visitante": filtered["away_team"],
-    "Estado": filtered["status"],
+    "Estado": filtered["status"].map(football_data.translate_status),
 })
 
 st.dataframe(display, use_container_width=True, hide_index=True)

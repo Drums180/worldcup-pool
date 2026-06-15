@@ -23,7 +23,7 @@ if history_df.empty:
 
 st.subheader("Evolución del total de puntos")
 pivot = history_df.pivot_table(index="date", columns="persona", values="total", aggfunc="last")
-pivot.index = pd.to_datetime(pivot.index).strftime("%b %d")
+pivot.index = pd.to_datetime(pivot.index).strftime("%d-%b").map(football_data.to_spanish_date)
 st.line_chart(pivot)
 
 st.subheader("¿Quién ha liderado en cada momento?")

@@ -20,6 +20,34 @@ STAGE_MAP = {
     "FINAL": "Final",
 }
 
+# football-data.org match status -> Spanish label
+STATUS_MAP = {
+    "SCHEDULED": "Programado",
+    "TIMED": "Programado",
+    "POSTPONED": "Postergado",
+    "IN_PLAY": "En juego",
+    "PAUSED": "Pausado",
+    "SUSPENDED": "Suspendido",
+    "FINISHED": "Finalizado",
+    "CANCELLED": "Cancelado",
+    "AWARDED": "Adjudicado",
+}
+
+# English month abbreviations (from strftime) -> Spanish
+MONTH_ABBR_ES = {
+    "Jan": "ene", "Feb": "feb", "Mar": "mar", "Apr": "abr",
+    "May": "may", "Jun": "jun", "Jul": "jul", "Aug": "ago",
+    "Sep": "sep", "Oct": "oct", "Nov": "nov", "Dec": "dic",
+}
+
+
+def to_spanish_date(text: str) -> str:
+    """Replace English month abbreviations in a formatted date string with Spanish ones."""
+    for en, es in MONTH_ABBR_ES.items():
+        text = text.replace(en, es)
+    return text
+
+
 # football-data.org team names (English) -> names used in the Equipos sheet (Spanish)
 TEAM_NAME_MAP = {
     "France": "Francia",
@@ -85,6 +113,10 @@ def translate_team(name: Optional[str]) -> str:
 
 def map_stage(stage: str) -> str:
     return STAGE_MAP.get(stage, stage)
+
+
+def translate_status(status: str) -> str:
+    return STATUS_MAP.get(status, status)
 
 
 @st.cache_data(ttl=300)
