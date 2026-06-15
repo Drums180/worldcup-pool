@@ -27,10 +27,13 @@ if st.button("🔄 Copiar resultados al Google Sheet", type="primary"):
         resultados_df = scoring.build_resultados(fixtures_df)
         bonuses_df = scoring.build_bonuses(fixtures_df)
 
-        sheets.write_resultados(resultados_df)
-        sheets.write_bonuses(bonuses_df)
-
-        picks_df = sheets.read_picks()
+        try:
+            sheets.write_resultados(resultados_df)
+            sheets.write_bonuses(bonuses_df)
+            picks_df = sheets.read_picks()
+        except Exception as e:
+            st.error(f"No se pudo sincronizar con Google Sheets: {e}")
+            st.stop()
         picks_long = scoring.normalize_picks(picks_df)
         leaderboard = scoring.compute_leaderboard(picks_long, resultados_df, bonuses_df)
 

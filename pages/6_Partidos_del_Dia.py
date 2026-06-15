@@ -11,7 +11,11 @@ except Exception as e:
     st.error(f"No se pudo obtener el calendario desde la API: {e}")
     st.stop()
 
-picks_df = sheets.read_picks()
+try:
+    picks_df = sheets.read_picks()
+except Exception as e:
+    st.error(f"No se pudieron obtener los equipos desde Google Sheets: {e}")
+    st.stop()
 picks_long = scoring.normalize_picks(picks_df)
 team_to_persona = picks_long.set_index("team")["persona"].to_dict()
 

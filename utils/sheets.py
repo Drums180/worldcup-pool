@@ -34,6 +34,7 @@ def _get_or_create_worksheet(sheet, name, headers):
     return ws
 
 
+@st.cache_data(ttl=600)
 def read_picks() -> pd.DataFrame:
     sheet = get_spreadsheet()
     try:

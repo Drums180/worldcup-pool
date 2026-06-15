@@ -4,11 +4,11 @@ from utils import football_data, scoring, sheets
 
 st.title("🎯 Equipos por persona")
 
-picks_df = sheets.read_picks()
 try:
+    picks_df = sheets.read_picks()
     fixtures_df = football_data.get_fixtures_df()
 except Exception as e:
-    st.error(f"No se pudo obtener el calendario desde la API: {e}")
+    st.error(f"No se pudieron obtener los datos: {e}")
     st.stop()
 resultados_df = scoring.build_resultados(fixtures_df)
 bonuses_df = scoring.build_bonuses(fixtures_df)
