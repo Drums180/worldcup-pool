@@ -3,8 +3,6 @@ import streamlit as st
 
 from utils import football_data
 
-st.set_page_config(page_title="Calendario - Copa Mundial 2026", page_icon="📅", layout="wide")
-
 st.title("📅 Calendario y Resultados")
 
 try:

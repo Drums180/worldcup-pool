@@ -1,9 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from utils import football_data, scoring, sheets
-
-st.set_page_config(page_title="Partidos del Día - Copa Mundial 2026", page_icon="🔥", layout="wide")
+from utils import football_data, loans, scoring, sheets
 
 st.title("🔥 Partidos del Día")
 
@@ -41,23 +39,28 @@ YELLOW = "background-color: #fff3b0"
 RED = "background-color: #f7c5c5"
 
 
-def team_info(team: str):
+def team_info(fixture_id: int, team: str):
     persona = team_to_persona.get(team, "Sin asignar")
     g = int(record["W"].get(team, 0))
     e = int(record["D"].get(team, 0))
     p = int(record["L"].get(team, 0))
+    loan = loans.get_loan(fixture_id, team)
+    if loan:
+        persona = f"{persona} (préstamo → {loan['receiver']})"
     return persona, g, e, p
 
 
 for _, f in todays.iterrows():
-    home_persona, home_g, home_e, home_p = team_info(f["home_team"])
-    away_persona, away_g, away_e, away_p = team_info(f["away_team"])
+    home_owner = team_to_persona.get(f["home_team"], "Sin asignar")
+    away_owner = team_to_persona.get(f["away_team"], "Sin asignar")
+    home_persona, home_g, home_e, home_p = team_info(f["fixture_id"], f["home_team"])
+    away_persona, away_g, away_e, away_p = team_info(f["fixture_id"], f["away_team"])
 
     header = f"**{f['date'].strftime('%H:%M')}** · {f['stage']} · {football_data.translate_status(f['status'])}"
     if pd.notna(f["home_goals"]) and pd.notna(f["away_goals"]):
         header += f" · {int(f['home_goals'])} - {int(f['away_goals'])}"
-    if home_persona == away_persona and home_persona != "Sin asignar":
-        header += f" · 🆚 ¡**{home_persona}** juega contra sí mismo!"
+    if home_owner == away_owner and home_owner != "Sin asignar":
+        header += f" · 🆚 ¡**{home_owner}** juega contra sí mismo!"
     st.markdown(header)
 
     match_df = pd.DataFrame({

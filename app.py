@@ -1,40 +1,24 @@
 import streamlit as st
 
-from utils import football_data, scoring, sheets
-
 st.set_page_config(page_title="Copa Mundial 2026", page_icon="🏆", layout="wide")
 
-st.title("🏆 Copa Mundial 2026")
+home = st.Page("views/home.py", title="Home", icon="🏆", default=True)
+partidos_dia = st.Page("pages/6_Partidos_del_Dia.py", title="Partidos del Día", icon="🔥")
+calendario = st.Page("pages/1_Calendario.py", title="Calendario", icon="📅")
+mis_estadisticas = st.Page("pages/5_Mis_Estadisticas.py", title="Mis Estadísticas", icon="📈")
+estadisticas = st.Page("pages/2_Estadisticas.py", title="Estadísticas", icon="📊")
+equipos = st.Page("pages/3_Equipos.py", title="Equipos", icon="🎯")
+prestamos = st.Page("pages/7_Prestamos.py", title="Préstamos", icon="🔄")
+admin = st.Page("pages/4_Admin.py", title="Admin", icon="⚙️")
 
-picks_df = sheets.read_picks()
-try:
-    fixtures_df = football_data.get_fixtures_df()
-except Exception as e:
-    st.error(f"No se pudo obtener el calendario desde la API: {e}")
-    st.stop()
-resultados_df = scoring.build_resultados(fixtures_df)
-bonuses_df = scoring.build_bonuses(fixtures_df)
-
-picks_long = scoring.normalize_picks(picks_df)
-leaderboard = scoring.compute_leaderboard(picks_long, resultados_df, bonuses_df)
-
-if leaderboard.empty:
-    st.info("Aún no hay datos.")
-else:
-    leader = leaderboard.iloc[0]
-    cols = st.columns(min(len(leaderboard), 3))
-    for col, (_, row) in zip(cols, leaderboard.head(3).iterrows()):
-        with col:
-            st.metric(row["persona"], f"{int(row['total'])} pts")
-
-    st.subheader("Tabla de posiciones")
-    display = leaderboard.rename(columns={
-        "persona": "Persona",
-        "match_points": "Puntos Partidos",
-        "bonus_points": "Puntos Eliminación",
-        "total": "Total",
-    })
-    display.index = range(1, len(display) + 1)
-    st.dataframe(display, use_container_width=True)
-
-    st.caption(f"🥇 Líder actual: **{leader['persona']}** con {int(leader['total'])} puntos")
+pg = st.navigation([
+    home,
+    partidos_dia,
+    calendario,
+    mis_estadisticas,
+    estadisticas,
+    equipos,
+    prestamos,
+    admin,
+])
+pg.run()

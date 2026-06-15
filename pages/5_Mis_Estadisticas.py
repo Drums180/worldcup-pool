@@ -4,8 +4,6 @@ import streamlit as st
 
 from utils import football_data, scoring, sheets
 
-st.set_page_config(page_title="Mis Estadísticas - Copa Mundial 2026", page_icon="📈", layout="wide")
-
 st.title("📈 Mis Estadísticas")
 
 try:

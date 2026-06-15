@@ -2,8 +2,6 @@ import streamlit as st
 
 from utils import football_data, scoring, sheets
 
-st.set_page_config(page_title="Admin - Copa Mundial 2026", page_icon="⚙️", layout="wide")
-
 st.title("⚙️ Admin")
 
 admin_password = st.secrets.get("admin_password")

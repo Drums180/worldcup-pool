@@ -193,3 +193,44 @@ def compute_leaderboard(
 
     summary = picks_long.groupby("persona")[["match_points", "bonus_points", "total"]].sum().reset_index()
     return summary.sort_values("total", ascending=False).reset_index(drop=True)
+
+
+def compute_leaderboard_with_loans(
+    picks_long: pd.DataFrame, resultados_df: pd.DataFrame, bonuses_df: pd.DataFrame, loans: list[dict]
+) -> pd.DataFrame:
+    """Like compute_leaderboard, but for each loan the match points earned by the
+    loaned team in that specific fixture go to the receiver instead of the original
+    owner. Elimination bonuses always stay with the original owner."""
+    if picks_long.empty:
+        return pd.DataFrame(columns=["persona", "match_points", "bonus_points", "total"])
+
+    personas = list(picks_long["persona"].unique())
+    team_to_persona = picks_long.set_index("team")["persona"].to_dict()
+
+    match_points = {persona: 0 for persona in personas}
+    if not resultados_df.empty:
+        for _, row in resultados_df.iterrows():
+            persona = team_to_persona.get(row["team"])
+            if persona is None:
+                continue
+            for loan in loans:
+                if loan["fixture_id"] == row["fixture_id"] and loan["team_loaned"] == row["team"]:
+                    persona = loan["receiver"]
+                    break
+            match_points[persona] = match_points.get(persona, 0) + row["points"]
+
+    bonus_pts = (
+        bonuses_df.set_index("team")["bonus_points"] if not bonuses_df.empty else pd.Series(dtype="int64")
+    )
+    picks_with_bonus = picks_long.copy()
+    picks_with_bonus["bonus_points"] = picks_with_bonus["team"].map(bonus_pts).fillna(0).astype(int)
+    bonus_by_persona = picks_with_bonus.groupby("persona")["bonus_points"].sum()
+
+    rows = []
+    for persona in personas:
+        mp = int(match_points.get(persona, 0))
+        bp = int(bonus_by_persona.get(persona, 0))
+        rows.append({"persona": persona, "match_points": mp, "bonus_points": bp, "total": mp + bp})
+
+    summary = pd.DataFrame(rows, columns=["persona", "match_points", "bonus_points", "total"])
+    return summary.sort_values("total", ascending=False).reset_index(drop=True)
