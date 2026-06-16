@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from utils import football_data, scoring, sheets
+from utils import football_data, loans, scoring, sheets
 
 st.title("📊 Estadísticas")
 
@@ -17,7 +17,7 @@ except Exception as e:
     st.error(f"No se pudieron obtener los equipos desde Google Sheets: {e}")
     st.stop()
 picks_long = scoring.normalize_picks(picks_df)
-history_df = scoring.build_history(fixtures_df, picks_long)
+history_df = scoring.build_history_with_loans(fixtures_df, picks_long, loans.LOANS)
 
 if history_df.empty:
     st.info("Aún no hay partidos finalizados.")

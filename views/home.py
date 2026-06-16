@@ -1,6 +1,6 @@
 import streamlit as st
 
-from utils import football_data, scoring, sheets
+from utils import football_data, loans, scoring, sheets
 
 st.title("🏆 Copa Mundial 2026")
 
@@ -14,7 +14,7 @@ resultados_df = scoring.build_resultados(fixtures_df)
 bonuses_df = scoring.build_bonuses(fixtures_df)
 
 picks_long = scoring.normalize_picks(picks_df)
-leaderboard = scoring.compute_leaderboard(picks_long, resultados_df, bonuses_df)
+leaderboard = scoring.compute_leaderboard_with_loans(picks_long, resultados_df, bonuses_df, loans.LOANS)
 
 if leaderboard.empty:
     st.info("Aún no hay datos.")
