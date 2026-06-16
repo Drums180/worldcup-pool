@@ -127,7 +127,12 @@ def build_history(fixtures_df: pd.DataFrame, picks_long: pd.DataFrame) -> pd.Dat
     if finished.empty:
         return pd.DataFrame(columns=columns)
 
-    finished["date"] = pd.to_datetime(finished["date"]).dt.date
+    finished["date"] = (
+        pd.to_datetime(finished["date"], utc=True)
+        .dt.tz_convert("America/Monterrey")
+        .dt.tz_localize(None)
+        .dt.date
+    )
     finished = finished.sort_values("date")
 
     team_to_persona = picks_long.set_index("team")["persona"].to_dict()
@@ -208,7 +213,12 @@ def build_history_with_loans(
     if finished.empty:
         return pd.DataFrame(columns=columns)
 
-    finished["date"] = pd.to_datetime(finished["date"]).dt.date
+    finished["date"] = (
+        pd.to_datetime(finished["date"], utc=True)
+        .dt.tz_convert("America/Monterrey")
+        .dt.tz_localize(None)
+        .dt.date
+    )
     finished = finished.sort_values("date")
 
     loan_map = {(l["fixture_id"], l["team_loaned"]): l["receiver"] for l in loans}

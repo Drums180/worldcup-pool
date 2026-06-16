@@ -85,7 +85,8 @@ with time_col:
     time_df = my_results.copy()
     time_df["Partidos acumulados"] = range(1, len(time_df) + 1)
     time_df["Fecha"] = time_df["date"].dt.strftime("%d-%b").map(football_data.to_spanish_date)
-    time_df = time_df.set_index("Fecha")[["Partidos acumulados"]]
+    # one point per day (last cumulative value of that day)
+    time_df = time_df.drop_duplicates("Fecha", keep="last").set_index("Fecha")[["Partidos acumulados"]]
     st.line_chart(time_df)
 
 st.divider()
