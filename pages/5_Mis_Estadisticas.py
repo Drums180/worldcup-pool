@@ -1,4 +1,4 @@
-import altair as alt
+import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 
@@ -60,34 +60,43 @@ chart_col, time_col = st.columns(2)
 
 with chart_col:
     st.subheader("Ganados / Empatados / Perdidos")
-    donut_df = pd.DataFrame({
-        "Resultado": ["Ganados", "Empatados", "Perdidos"],
-        "Partidos": [won, drawn, lost],
-    })
-    donut_df = donut_df[donut_df["Partidos"] > 0]
-    donut_df["Porcentaje"] = donut_df["Partidos"] / played
-
-    donut = alt.Chart(donut_df).mark_arc(innerRadius=70).encode(
-        theta=alt.Theta("Partidos", type="quantitative"),
-        color=alt.Color(
-            "Resultado",
-            scale=alt.Scale(
-                domain=["Ganados", "Empatados", "Perdidos"],
-                range=["#2ecc71", "#f1c40f", "#e74c3c"],
-            ),
-        ),
-        tooltip=["Resultado", "Partidos", alt.Tooltip("Porcentaje", format=".0%")],
-    )
-    st.altair_chart(donut, use_container_width=True)
+    result_data = [
+        (v, f"{l} ({v / played:.0%})", c)
+        for v, l, c in [
+            (won, "Ganados", "#2ecc71"),
+            (drawn, "Empatados", "#f1c40f"),
+            (lost, "Perdidos", "#e74c3c"),
+        ]
+        if v > 0
+    ]
+    if result_data:
+        values, labels, colors = zip(*result_data)
+        fig, ax = plt.subplots(figsize=(4, 4))
+        wedges, _ = ax.pie(
+            list(values),
+            colors=list(colors),
+            startangle=90,
+            wedgeprops={"width": 0.5},
+        )
+        ax.legend(wedges, list(labels), loc="center left", bbox_to_anchor=(0.85, 0.5), fontsize=9)
+        ax.axis("equal")
+        st.pyplot(fig)
+        plt.close(fig)
 
 with time_col:
     st.subheader("Partidos jugados a través del tiempo")
     time_df = my_results.copy()
     time_df["Partidos acumulados"] = range(1, len(time_df) + 1)
     time_df["Fecha"] = time_df["date"].dt.strftime("%d-%b").map(football_data.to_spanish_date)
-    # one point per day (last cumulative value of that day)
-    time_df = time_df.drop_duplicates("Fecha", keep="last").set_index("Fecha")[["Partidos acumulados"]]
-    st.line_chart(time_df)
+    time_df = time_df.drop_duplicates("Fecha", keep="last")
+    fig2, ax2 = plt.subplots(figsize=(5, 3))
+    ax2.plot(time_df["Fecha"].tolist(), time_df["Partidos acumulados"].tolist(), marker="o", color="#3498db")
+    ax2.set_ylabel("Partidos acumulados")
+    ax2.grid(True, alpha=0.3)
+    plt.xticks(rotation=45, ha="right")
+    plt.tight_layout()
+    st.pyplot(fig2)
+    plt.close(fig2)
 
 st.divider()
 

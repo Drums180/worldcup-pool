@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 
@@ -26,7 +27,17 @@ if history_df.empty:
 st.subheader("Evolución del total de puntos")
 pivot = history_df.pivot_table(index="date", columns="persona", values="total", aggfunc="last")
 pivot.index = pd.to_datetime(pivot.index).strftime("%d-%b").map(football_data.to_spanish_date)
-st.line_chart(pivot)
+
+fig, ax = plt.subplots(figsize=(10, 4))
+for col in pivot.columns:
+    ax.plot(pivot.index.tolist(), pivot[col].tolist(), marker="o", label=col)
+ax.set_ylabel("Puntos")
+ax.legend(loc="upper left")
+ax.grid(True, alpha=0.3)
+plt.xticks(rotation=45, ha="right")
+plt.tight_layout()
+st.pyplot(fig)
+plt.close(fig)
 
 st.subheader("¿Quién ha liderado en cada momento?")
 leader_per_date = history_df.loc[history_df.groupby("date")["total"].idxmax()]
