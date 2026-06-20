@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 
-from utils import football_data, scoring, sheets
+from utils import football_data, loans as loans_mod, scoring, sheets
 
 st.title("📈 Mis Estadísticas")
 
@@ -30,7 +30,26 @@ resultados_df = scoring.build_resultados(fixtures_df)
 bonuses_df = scoring.build_bonuses(fixtures_df)
 
 my_teams = picks_long[picks_long["persona"] == persona]["team"].tolist()
-my_results = resultados_df[resultados_df["team"].isin(my_teams)].copy()
+
+# Build loan-adjusted result set:
+# - owned team results minus fixtures where that team was loaned out
+# - plus results for teams loaned TO this persona
+if resultados_df.empty:
+    my_results = pd.DataFrame(columns=resultados_df.columns)
+else:
+    team_to_persona = picks_long.set_index("team")["persona"].to_dict()
+
+    def scoring_persona(row):
+        orig = team_to_persona.get(row["team"])
+        if orig is None:
+            return None
+        for loan in loans_mod.LOANS:
+            if loan["fixture_id"] == row["fixture_id"] and loan["team_loaned"] == row["team"]:
+                return loan["receiver"]
+        return orig
+
+    mask = resultados_df.apply(scoring_persona, axis=1) == persona
+    my_results = resultados_df[mask].copy()
 
 if my_results.empty:
     st.info("Todavía no hay partidos finalizados para tus equipos.")
@@ -103,6 +122,9 @@ st.divider()
 st.subheader("Desempeño por equipo")
 stage_reached = bonuses_df.set_index("team")["stage_reached"] if not bonuses_df.empty else None
 
+# Teams in my_results not owned by this persona are received loans
+received_loan_teams = set(my_results["team"].unique()) - set(my_teams)
+
 team_stats = my_results.groupby("team").agg(
     PJ=("result", "count"),
     G=("result", lambda s: (s == "W").sum()),
@@ -115,7 +137,9 @@ team_stats = my_results.groupby("team").agg(
 team_stats["DG"] = team_stats["GF"] - team_stats["GC"]
 team_stats["Etapa Alcanzada"] = team_stats["team"].map(stage_reached) if stage_reached is not None else "-"
 team_stats["Etapa Alcanzada"] = team_stats["Etapa Alcanzada"].fillna("Grupos")
-team_stats = team_stats.rename(columns={"team": "Equipo"})
+team_stats["Equipo"] = team_stats["team"].apply(
+    lambda t: f"{t} (préstamo)" if t in received_loan_teams else t
+)
 team_stats = team_stats.sort_values("Pts", ascending=False)
 
 st.dataframe(
